@@ -7,29 +7,26 @@ package db
 
 import (
 	"context"
-
-	"github.com/google/uuid"
+	"database/sql"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
-INSERT INTO "transaction" (
-  id,
+INSERT INTO transactions (
   user_id,
   amount
 ) VALUES (
-  $1, $2, $3
+  $1, $2
 )
 RETURNING id, user_id, amount, created_at, updated_at
 `
 
 type CreateTransactionParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	UserID int32
 	Amount string
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
-	row := q.db.QueryRowContext(ctx, createTransaction, arg.ID, arg.UserID, arg.Amount)
+	row := q.db.QueryRowContext(ctx, createTransaction, arg.UserID, arg.Amount)
 	var i Transaction
 	err := row.Scan(
 		&i.ID,
@@ -42,29 +39,26 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO "user" (
-  id,
+INSERT INTO users (
   name,
   email,
   password,
   token
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4
 )
 RETURNING id, name, email, password, token
 `
 
 type CreateUserParams struct {
-	ID       uuid.UUID
 	Name     string
 	Email    string
 	Password string
-	Token    string
+	Token    sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
-		arg.ID,
 		arg.Name,
 		arg.Email,
 		arg.Password,
@@ -82,7 +76,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, token FROM "user"
+SELECT id, name, email, password, token FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -100,11 +94,11 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, password, token FROM "user"
+SELECT id, name, email, password, token FROM users
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
@@ -118,12 +112,12 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const listTransactionsByUserID = `-- name: ListTransactionsByUserID :many
-SELECT id, user_id, amount, created_at, updated_at FROM "transaction"
+SELECT id, user_id, amount, created_at, updated_at FROM transactions
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID uuid.UUID) ([]Transaction, error) {
+func (q *Queries) ListTransactionsByUserID(ctx context.Context, userID int32) ([]Transaction, error) {
 	rows, err := q.db.QueryContext(ctx, listTransactionsByUserID, userID)
 	if err != nil {
 		return nil, err

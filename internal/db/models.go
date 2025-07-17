@@ -5,23 +5,22 @@
 package db
 
 import (
+	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Transaction struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
+	ID        int32
+	UserID    int32
 	Amount    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 type User struct {
-	ID       uuid.UUID
+	ID       int32
 	Name     string
 	Email    string
 	Password string
-	Token    string
+	Token    sql.NullString
 }

@@ -1,17 +1,15 @@
-CREATE TABLE "user" (
-  "id" uuid PRIMARY KEY,
-  "name" text NOT NULL,
-  "email" text UNIQUE NOT NULL,
-  "password" text NOT NULL,
-  "token" text NOT NULL
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    token TEXT
 );
 
-CREATE TABLE "transaction" (
-  "id" uuid PRIMARY KEY,
-  "user_id" uuid NOT NULL,
-  "amount" text NOT NULL,
-  "created_at" timestamptz NOT NULL DEFAULT (now()),
-  "updated_at" timestamptz NOT NULL DEFAULT (now())
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
-
-ALTER TABLE "transaction" ADD FOREIGN KEY ("user_id") REFERENCES "user" ("id");
